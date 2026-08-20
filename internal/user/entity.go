@@ -9,15 +9,15 @@ import (
 
 type User struct {
 	ID        string    `json:"id" gorm:"type:uuid;primaryKey"`
-	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime;not null"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime;not null"`
 
-	Name     string `json:"name" validate:"required"`
-	Email    string `json:"email" validate:"required,email" gorm:"unique"`
-	Password string `json:"password" validate:"required,min=8"`
+	Name     string `json:"name" gorm:"not null"`
+	Email    string `json:"email" gorm:"unique;not null"`
+	Password string `json:"password" gorm:"not null"`
 }
 
-func (u *User) BeforeCreate(tx *gorm.DB) error {
+func (u *User) BeforeCreate(_ *gorm.DB) error {
 	if u.ID == "" {
 		u.ID = uuid.NewString()
 	}
