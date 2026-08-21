@@ -2,7 +2,6 @@ package user
 
 import (
 	"github.com/saurav11sarkar/ticket/internal/user/dto"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
@@ -14,15 +13,15 @@ func NewUserService(repository Repository) *Service {
 }
 
 func (s *Service) CreateUser(req dto.CreateUserRequest) (dto.CreateUserResponse, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return dto.CreateUserResponse{}, err
-	}
+	//hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	//if err != nil {
+	//	return dto.CreateUserResponse{}, err
+	//}
 
 	user := User{
 		Name:     req.Name,
 		Email:    req.Email,
-		Password: string(hashedPassword),
+		Password: req.Password,
 	}
 	if err := s.repository.CreateUser(&user); err != nil {
 		return dto.CreateUserResponse{}, err
