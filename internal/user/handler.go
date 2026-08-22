@@ -57,3 +57,41 @@ func (handler *Handler) CreateUser(c *echo.Context) error {
 		Data:    user,
 	})
 }
+
+func (handler *Handler) LoginUser(c *echo.Context) error {
+	req := dto.LoginRequest{}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, httpResponse.Error{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+			Detail:  err.Error(),
+		})
+	}
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, httpResponse.Error{
+			Code:    http.StatusBadRequest,
+			Message: "Validation failed",
+			Detail:  err.Error(),
+		})
+	}
+	user, err := handler.service.LoginUser(req)
+	if err != nil {
+		if errors.Is(err, ErrInvalidCredentials) {
+			return c.JSON(http.StatusUnauthorized, httpResponse.Error{
+				Code:    http.StatusUnauthorized,
+				Message: "Invalid email or password",
+			})
+		}
+
+		return c.JSON(http.StatusInternalServerError, httpResponse.Error{
+			Code:    http.StatusInternalServerError,
+			Message: "Something went wrong",
+		})
+	}
+
+	return c.JSON(http.StatusOK, httpResponse.Success{
+		Code:    http.StatusOK,
+		Message: "Login successful",
+		Data:    user,
+	})
+}

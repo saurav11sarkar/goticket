@@ -10,6 +10,7 @@ var ErrUserAlreadyExists = errors.New("user already exists")
 
 type Repository interface {
 	CreateUser(user *User) error
+	GetUserByEmail(email string) (*User, error)
 }
 
 type userRepository struct {
@@ -30,4 +31,16 @@ func (r *userRepository) CreateUser(user *User) error {
 	}
 
 	return result.Error
+}
+
+func (r *userRepository) GetUserByEmail(email string) (*User, error) {
+	var user User
+	result := r.db.Where(&User{Email: email}).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &user, nil
 }
