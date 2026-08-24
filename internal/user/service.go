@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/saurav11sarkar/ticket/internal/auth"
 	"github.com/saurav11sarkar/ticket/internal/user/dto"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -11,19 +12,15 @@ import (
 var ErrInvalidCredentials = errors.New("invalid email or password")
 
 type Service struct {
+	jwtService auth.JwtService
 	repository Repository
 }
 
-func NewUserService(repository Repository) *Service {
-	return &Service{repository: repository}
+func NewUserService(repository Repository, jwtService auth.JwtService) *Service {
+	return &Service{repository: repository, jwtService: jwtService}
 }
 
 func (s *Service) CreateUser(req dto.CreateUserRequest) (dto.CreateUserResponse, error) {
-	//hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	//if err != nil {
-	//	return dto.CreateUserResponse{}, err
-	//}
-
 	user := User{
 		Name:     req.Name,
 		Email:    req.Email,
@@ -58,11 +55,17 @@ func (s *Service) LoginUser(req dto.LoginRequest) (dto.LoginResponse, error) {
 		return dto.LoginResponse{}, ErrInvalidCredentials
 	}
 
+	token, err := s.jwtService.GenerateToken(user.ID, user.Email, user.Name)
+	if err != nil {
+		return dto.LoginResponse{}, err
+	}
+
 	return dto.LoginResponse{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Name:      user.Name,
 		Email:     user.Email,
+		Token:     token,
 	}, nil
 }

@@ -16,5 +16,5 @@ type LoginResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
-	//Token     string    `json:"token"`
+	Token     string    `json:"token,omitempty"`
 }
