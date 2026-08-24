@@ -83,7 +83,7 @@ func (js *jwtService) ValidateToken(tokenString string) (*JwtClaims, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid token: %v", err)
 	}
-	if claims, ok := token.Claims.(*JwtClaims); ok && jwt.Valid {
+	if claims, ok := token.Claims.(*JwtClaims); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, fmt.Errorf("invalid token")
