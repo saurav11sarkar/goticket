@@ -69,3 +69,21 @@ func (s *Service) LoginUser(req dto.LoginRequest) (dto.LoginResponse, error) {
 		Token:     token,
 	}, nil
 }
+
+func (s *Service) GetMe(userID string) (dto.LoginResponse, error) {
+	user, err := s.repository.GetUserById(userID)
+	if err != nil {
+		return dto.LoginResponse{}, fmt.Errorf("get user by ID: %w", err)
+	}
+	if user == nil {
+		return dto.LoginResponse{}, ErrUserNotFound
+	}
+
+	return dto.LoginResponse{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Name:      user.Name,
+		Email:     user.Email,
+	}, nil
+}

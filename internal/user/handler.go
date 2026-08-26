@@ -95,3 +95,42 @@ func (handler *Handler) LoginUser(c *echo.Context) error {
 		Data:    user,
 	})
 }
+
+func (handler *Handler) GetMe(c *echo.Context) error {
+	userID, ok := c.Get("id").(string)
+	if !ok || userID == "" {
+		return c.JSON(http.StatusUnauthorized, httpResponse.Error{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		})
+	}
+	user, err := handler.service.GetMe(userID)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return c.JSON(
+				http.StatusNotFound,
+				httpResponse.Error{
+					Code:    http.StatusNotFound,
+					Message: "User not found",
+				},
+			)
+		}
+
+		return c.JSON(
+			http.StatusInternalServerError,
+			httpResponse.Error{
+				Code:    http.StatusInternalServerError,
+				Message: "Something went wrong",
+			},
+		)
+	}
+
+	return c.JSON(
+		http.StatusOK,
+		httpResponse.Success{
+			Code:    http.StatusOK,
+			Message: "User retrieved successfully",
+			Data:    user,
+		},
+	)
+}

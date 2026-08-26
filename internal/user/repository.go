@@ -6,11 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrUserAlreadyExists = errors.New("user already exists")
+var (
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound      = errors.New("user not found")
+)
 
 type Repository interface {
 	CreateUser(user *User) error
 	GetUserByEmail(email string) (*User, error)
+	GetUserById(id string) (*User, error)
 }
 
 type userRepository struct {
@@ -39,6 +43,18 @@ func (r *userRepository) GetUserByEmail(email string) (*User, error) {
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &user, nil
+}
+
+func (r *userRepository) GetUserById(id string) (*User, error) {
+	var user User
+	result := r.db.Where(&User{ID: id}).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
 		}
 		return nil, result.Error
 	}
