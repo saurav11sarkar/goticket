@@ -50,24 +50,63 @@ func (s *service) Create(req dto.CreateEventRequest) (*dto.EventResponse, error)
 }
 
 func (s *service) GetAll() ([]*dto.EventResponse, error) {
-	// implementation
-	return nil, nil
+	event, err := s.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	var events []*dto.EventResponse
+	for _, event := range event {
+		events = append(events, event.ToResponse())
+	}
+	return events, nil
 }
 
 func (s *service) GetByID(eventID string) (*dto.EventResponse, error) {
-	// implementation
-	return nil, nil
+	event, err := s.repo.GetByID(eventID)
+	if err != nil {
+		return nil, err
+	}
+	return event.ToResponse(), nil
 }
 
 func (s *service) Update(
 	eventID string,
 	req dto.UpdateEventRequest,
 ) (*dto.EventResponse, error) {
-	// implementation
-	return nil, nil
+	if req.Title == "" &&
+		req.Description == "" &&
+		req.Location == "" &&
+		req.StartAt.IsZero() &&
+		req.TotalTicket == 0 &&
+		req.Price == 0 {
+		return s.GetByID(eventID)
+	}
+
+	event := &Event{
+		Title:       req.Title,
+		Description: req.Description,
+		Location:    req.Location,
+		StartAt:     req.StartAt,
+		TotalTicket: req.TotalTicket,
+		Price:       req.Price,
+	}
+
+	if req.TotalTicket > 0 {
+		event.AvailableTicket = req.TotalTicket
+	}
+
+	if err := s.repo.Update(eventID, event); err != nil {
+		return nil, err
+	}
+
+	updatedEvent, err := s.repo.GetByID(eventID)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedEvent.ToResponse(), nil
 }
 
 func (s *service) Delete(eventID string) error {
-	// implementation
-	return nil
+	return s.repo.Delete(eventID)
 }

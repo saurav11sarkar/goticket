@@ -52,7 +52,7 @@ func (r *respository) GetAll() ([]*Event, error) {
 }
 
 func (r *respository) GetByID(eventID string) (*Event, error) {
-	var event *Event
+	var event Event
 	result := r.db.Where(&Event{ID: eventID}).First(&event)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -60,7 +60,7 @@ func (r *respository) GetByID(eventID string) (*Event, error) {
 		}
 		return nil, result.Error
 	}
-	return event, nil
+	return &event, nil
 }
 
 func (r *respository) Update(eventID string, event *Event) error {
