@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	"github.com/saurav11sarkar/ticket/internal/booking"
 	"github.com/saurav11sarkar/ticket/internal/config"
 	"github.com/saurav11sarkar/ticket/internal/event"
 	"github.com/saurav11sarkar/ticket/internal/httpResponse"
@@ -23,7 +24,7 @@ func (cv *customValidator) Validate(value any) error {
 }
 
 func Start(db *gorm.DB, cfg *config.Config) error {
-	if err := db.AutoMigrate(&user.User{}, &event.Event{}); err != nil {
+	if err := db.AutoMigrate(&user.User{}, &event.Event{}, &booking.BookingEntity{}); err != nil {
 		return fmt.Errorf("migrate database: %w", err)
 	}
 
@@ -39,7 +40,7 @@ func Start(db *gorm.DB, cfg *config.Config) error {
 		})
 	})
 
-	user.RegisterRouter(e, db)
+	user.RegisterRouter(e, db, cfg)
 	event.RegisterRouter(e, db)
 
 	e.Logger.Info("Connected to database")

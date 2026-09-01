@@ -73,26 +73,20 @@ func (s *service) Update(
 	eventID string,
 	req dto.UpdateEventRequest,
 ) (*dto.EventResponse, error) {
-	if req.Title == "" &&
-		req.Description == "" &&
-		req.Location == "" &&
-		req.StartAt.IsZero() &&
-		req.TotalTicket == 0 &&
-		req.Price == 0 {
+	if req.IsEmpty() {
 		return s.GetByID(eventID)
 	}
 
-	event := &Event{
-		Title:       req.Title,
-		Description: req.Description,
-		Location:    req.Location,
-		StartAt:     req.StartAt,
-		TotalTicket: req.TotalTicket,
-		Price:       req.Price,
-	}
+	event := &Event{}
+	assignIfPresent(&event.Title, req.Title)
+	assignIfPresent(&event.Description, req.Description)
+	assignIfPresent(&event.Location, req.Location)
+	assignIfPresent(&event.StartAt, req.StartAt)
+	assignIfPresent(&event.TotalTicket, req.TotalTicket)
+	assignIfPresent(&event.Price, req.Price)
 
-	if req.TotalTicket > 0 {
-		event.AvailableTicket = req.TotalTicket
+	if req.TotalTicket != nil {
+		event.AvailableTicket = *req.TotalTicket
 	}
 
 	if err := s.repo.Update(eventID, event); err != nil {
@@ -109,4 +103,10 @@ func (s *service) Update(
 
 func (s *service) Delete(eventID string) error {
 	return s.repo.Delete(eventID)
+}
+
+func assignIfPresent[T any](destination *T, source *T) {
+	if source != nil {
+		*destination = *source
+	}
 }

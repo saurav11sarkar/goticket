@@ -9,7 +9,7 @@ import (
 )
 
 func ConnectDatabase(cfg *Config) *gorm.DB {
-	loadConfig := cfg.Dsn
+	loadConfig := cfg.DSN
 
 	db, err := gorm.Open(postgres.Open(loadConfig), &gorm.Config{
 		TranslateError: true,

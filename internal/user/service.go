@@ -3,6 +3,8 @@ package user
 import (
 	"errors"
 	"fmt"
+	"html"
+	"log"
 
 	"github.com/saurav11sarkar/ticket/internal/auth"
 	"github.com/saurav11sarkar/ticket/internal/user/dto"
@@ -11,13 +13,27 @@ import (
 
 var ErrInvalidCredentials = errors.New("invalid email or password")
 
-type Service struct {
-	jwtService auth.JwtService
-	repository Repository
+const (
+	userCreatedEmailSubject = "User created successfully"
+	userCreatedEmailHTML    = `<h1>Welcome to Tricket, %s!</h1><p>Your account has been created successfully.</p>`
+)
+
+type EmailSender interface {
+	SendEmail(email, subject, html string) error
 }
 
-func NewUserService(repository Repository, jwtService auth.JwtService) *Service {
-	return &Service{repository: repository, jwtService: jwtService}
+type Service struct {
+	jwtService  auth.JwtService
+	repository  Repository
+	emailSender EmailSender
+}
+
+func NewUserService(repository Repository, jwtService auth.JwtService, emailSender EmailSender) *Service {
+	return &Service{
+		repository:  repository,
+		jwtService:  jwtService,
+		emailSender: emailSender,
+	}
 }
 
 func (s *Service) CreateUser(req dto.CreateUserRequest) (dto.CreateUserResponse, error) {
@@ -28,6 +44,13 @@ func (s *Service) CreateUser(req dto.CreateUserRequest) (dto.CreateUserResponse,
 	}
 	if err := s.repository.CreateUser(&user); err != nil {
 		return dto.CreateUserResponse{}, err
+	}
+
+	emailHTML := fmt.Sprintf(userCreatedEmailHTML, html.EscapeString(user.Name))
+	if err := s.emailSender.SendEmail(user.Email, userCreatedEmailSubject, emailHTML); err != nil {
+		// The user is already persisted, so a welcome-email failure must not make
+		// registration look unsuccessful to the client.
+		log.Printf("send user creation email: %v", err)
 	}
 
 	return dto.CreateUserResponse{
