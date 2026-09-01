@@ -150,3 +150,29 @@ func (handler *Handler) GetMe(c *echo.Context) error {
 		},
 	)
 }
+
+func (handler *Handler) GetAll(c *echo.Context) error {
+	var query dto.UserQuery
+	if err := echo.BindQueryParams(c, &query); err != nil {
+		return c.JSON(http.StatusBadRequest, httpResponse.Error{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid query parameters",
+			Detail:  err.Error(),
+		})
+	}
+
+	users, meta, err := handler.service.GetAll(c.Request().Context(), query)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, httpResponse.Error{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get users",
+		})
+	}
+
+	return c.JSON(http.StatusOK, httpResponse.Success{
+		Code:    http.StatusOK,
+		Message: "Users retrieved successfully",
+		Meta:    meta,
+		Data:    users,
+	})
+}

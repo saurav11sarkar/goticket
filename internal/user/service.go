@@ -1,12 +1,14 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"html"
 	"log"
 
 	"github.com/saurav11sarkar/ticket/internal/auth"
+	"github.com/saurav11sarkar/ticket/internal/common"
 	"github.com/saurav11sarkar/ticket/internal/user/dto"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -55,14 +57,7 @@ func (s *Service) CreateUser(req dto.CreateUserRequest, profileImage string) (dt
 		log.Printf("send user creation email: %v", err)
 	}
 
-	return dto.CreateUserResponse{
-		ID:           user.ID,
-		CreatedAt:    user.CreatedAt,
-		UpdatedAt:    user.UpdatedAt,
-		Name:         user.Name,
-		Email:        user.Email,
-		ProfileImage: user.ProfileImage,
-	}, nil
+	return toUserResponse(&user), nil
 }
 
 func (s *Service) LoginUser(req dto.LoginRequest) (dto.LoginResponse, error) {
@@ -114,4 +109,46 @@ func (s *Service) GetMe(userID string) (dto.LoginResponse, error) {
 		Email:        user.Email,
 		ProfileImage: user.ProfileImage,
 	}, nil
+}
+
+func (s *Service) GetAll(
+	ctx context.Context,
+	query dto.UserQuery,
+) ([]dto.UserResponse, common.Meta, error) {
+	allowedSortFields := map[string]string{
+		"name":      "name",
+		"email":     "email",
+		"createdAt": "created_at",
+		"updatedAt": "updated_at",
+	}
+	pagination := common.NewPagination(
+		query.Page,
+		query.Limit,
+		query.SortBy,
+		query.SortOrder,
+		allowedSortFields,
+	)
+
+	users, total, err := s.repository.GetAll(ctx, query, pagination)
+	if err != nil {
+		return nil, common.Meta{}, fmt.Errorf("get users: %w", err)
+	}
+
+	responses := make([]dto.UserResponse, 0, len(users))
+	for _, user := range users {
+		responses = append(responses, toUserResponse(user))
+	}
+
+	return responses, common.NewMeta(total, pagination), nil
+}
+
+func toUserResponse(user *User) dto.UserResponse {
+	return dto.UserResponse{
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Name:         user.Name,
+		Email:        user.Email,
+		ProfileImage: user.ProfileImage,
+	}
 }
