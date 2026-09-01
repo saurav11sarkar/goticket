@@ -36,12 +36,14 @@ func NewUserService(repository Repository, jwtService auth.JwtService, emailSend
 	}
 }
 
-func (s *Service) CreateUser(req dto.CreateUserRequest) (dto.CreateUserResponse, error) {
+func (s *Service) CreateUser(req dto.CreateUserRequest, profileImage string) (dto.CreateUserResponse, error) {
 	user := User{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
+		Name:         req.Name,
+		Email:        req.Email,
+		Password:     req.Password,
+		ProfileImage: profileImage,
 	}
+
 	if err := s.repository.CreateUser(&user); err != nil {
 		return dto.CreateUserResponse{}, err
 	}
@@ -54,11 +56,12 @@ func (s *Service) CreateUser(req dto.CreateUserRequest) (dto.CreateUserResponse,
 	}
 
 	return dto.CreateUserResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Name:      user.Name,
-		Email:     user.Email,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Name:         user.Name,
+		Email:        user.Email,
+		ProfileImage: user.ProfileImage,
 	}, nil
 }
 
@@ -84,12 +87,13 @@ func (s *Service) LoginUser(req dto.LoginRequest) (dto.LoginResponse, error) {
 	}
 
 	return dto.LoginResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Name:      user.Name,
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Name:         user.Name,
+		Email:        user.Email,
+		Token:        token,
+		ProfileImage: user.ProfileImage,
 	}, nil
 }
 
@@ -103,10 +107,11 @@ func (s *Service) GetMe(userID string) (dto.LoginResponse, error) {
 	}
 
 	return dto.LoginResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Name:      user.Name,
-		Email:     user.Email,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Name:         user.Name,
+		Email:        user.Email,
+		ProfileImage: user.ProfileImage,
 	}, nil
 }

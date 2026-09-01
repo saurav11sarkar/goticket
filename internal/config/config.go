@@ -19,7 +19,6 @@ type Config struct {
 	CloudinaryCloudName string
 	CloudinaryAPIKey    string
 	CloudinaryAPISecret string
-	CloudinaryFolder    string
 
 	// Email
 	EmailExpires string
@@ -32,7 +31,6 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	// Local development-এর জন্য .env load
 	_ = godotenv.Load(".env")
 
 	config := &Config{
@@ -43,7 +41,6 @@ func LoadConfig() (*Config, error) {
 		CloudinaryCloudName: os.Getenv("CLOUDINARY_CLOUD_NAME"),
 		CloudinaryAPIKey:    os.Getenv("CLOUDINARY_API_KEY"),
 		CloudinaryAPISecret: os.Getenv("CLOUDINARY_API_SECRET"),
-		CloudinaryFolder:    os.Getenv("CLOUDINARY_FOLDER"),
 
 		EmailExpires: os.Getenv("EMAIL_EXPIRES"),
 		EmailHost:    os.Getenv("EMAIL_HOST"),

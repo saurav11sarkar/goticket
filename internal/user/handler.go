@@ -7,14 +7,16 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/saurav11sarkar/ticket/internal/httpResponse"
 	"github.com/saurav11sarkar/ticket/internal/user/dto"
+	"github.com/saurav11sarkar/ticket/internal/utils"
 )
 
 type Handler struct {
-	service *Service
+	service            *Service
+	cloudinaryUploader *utils.CloudinaryUploader
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, cloudinaryUploader *utils.CloudinaryUploader) *Handler {
+	return &Handler{service: service, cloudinaryUploader: cloudinaryUploader}
 }
 
 func (handler *Handler) CreateUser(c *echo.Context) error {
@@ -36,7 +38,21 @@ func (handler *Handler) CreateUser(c *echo.Context) error {
 		})
 	}
 
-	user, err := handler.service.CreateUser(req)
+	file, err := c.FormFile("profile_image")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, httpResponse.Error{
+			Code:    http.StatusBadRequest,
+			Message: "Profile image is required",
+		})
+	}
+	profileImageURL, err := handler.cloudinaryUploader.UploadImage(file)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, httpResponse.Error{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to upload image",
+		})
+	}
+	user, err := handler.service.CreateUser(req, profileImageURL)
 	if err != nil {
 		if errors.Is(err, ErrUserAlreadyExists) {
 			return c.JSON(http.StatusConflict, httpResponse.Error{
