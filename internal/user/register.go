@@ -21,10 +21,13 @@ func RegisterRouter(e *echo.Echo, db *gorm.DB, cfg *config.Config) {
 	}
 	userService := NewUserService(userRepository, jwtService, emailSender)
 	userHandler := NewHandler(userService, cloudinaryUploader)
+	authMiddleware := middlewares.AuthMiddleware(jwtService)
 
-	api := e.Group("/api/v1/auth")
+	authRoutes := e.Group("/api/v1/auth")
+	authRoutes.POST("/register", userHandler.CreateUser)
+	authRoutes.POST("/login", userHandler.LoginUser)
+	authRoutes.GET("/me", userHandler.GetMe, authMiddleware)
 
-	api.POST("/register", userHandler.CreateUser)
-	api.POST("/login", userHandler.LoginUser)
-	api.GET("/me", userHandler.GetMe, middlewares.AuthMiddleware(jwtService))
+	userRoutes := e.Group("/api/v1/users", authMiddleware)
+	userRoutes.GET("", userHandler.GetAll)
 }
