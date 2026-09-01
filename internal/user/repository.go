@@ -1,9 +1,15 @@
 package user
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"strings"
 
+	"github.com/saurav11sarkar/ticket/internal/common"
+	"github.com/saurav11sarkar/ticket/internal/user/dto"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var (
@@ -15,6 +21,11 @@ type Repository interface {
 	CreateUser(user *User) error
 	GetUserByEmail(email string) (*User, error)
 	GetUserById(id string) (*User, error)
+	GetAll(
+		ctx context.Context,
+		filter dto.UserQuery,
+		pagination common.Pagination,
+	) ([]*User, int64, error)
 }
 
 type userRepository struct {
@@ -59,4 +70,52 @@ func (r *userRepository) GetUserById(id string) (*User, error) {
 		return nil, result.Error
 	}
 	return &user, nil
+}
+
+func (r *userRepository) GetAll(
+	ctx context.Context,
+	filter dto.UserQuery,
+	pagination common.Pagination,
+) ([]*User, int64, error) {
+	users := make([]*User, 0)
+	var total int64
+
+	query := r.db.
+		WithContext(ctx).
+		Model(&User{}).
+		Scopes(common.SearchScope(filter.SearchTerm, "name", "email"))
+
+	query = applyUserFilters(query, filter)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count users: %w", err)
+	}
+
+	if err := query.
+		Order(clause.OrderByColumn{
+			Column: clause.Column{Name: pagination.SortBy},
+			Desc:   pagination.SortOrder == "desc",
+		}).
+		Order(clause.OrderByColumn{
+			Column: clause.Column{Name: "id"},
+		}).
+		Limit(pagination.Limit).
+		Offset(pagination.Offset).
+		Find(&users).
+		Error; err != nil {
+		return nil, 0, fmt.Errorf("find users: %w", err)
+	}
+
+	return users, total, nil
+}
+
+func applyUserFilters(db *gorm.DB, filter dto.UserQuery) *gorm.DB {
+	if name := strings.TrimSpace(filter.Name); name != "" {
+		db = db.Where("name = ?", name)
+	}
+	if email := strings.TrimSpace(filter.Email); email != "" {
+		db = db.Where("email = ?", email)
+	}
+
+	return db
 }
